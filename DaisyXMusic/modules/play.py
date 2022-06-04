@@ -713,7 +713,7 @@ async def play(_, message: Message):
             )
             requested_by = message.from_user.first_name
             await generate_cover(requested_by, title, views, duration, thumbnail)
-            file = await get_audio(link)
+            file = await get_audio(url)
     chat_id = get_chat_id(message.chat)
     for x in pytgcalls.active_calls:
         ACTV_CALLS.append(int(x.chat_id))
@@ -1002,6 +1002,7 @@ async def lol_cb(b, cb):
     requested_by = useer_name
     await generate_cover(requested_by, title, views, duration, thumbnail)
     file = await get_audio(url)
+    print(file)
     for x in pytgcalls.active_calls:
         ACTV_CALLS.append(int(x.chat_id))
     if int(chat_id) in ACTV_CALLS:
