@@ -100,6 +100,53 @@ async def generate_cover(requested_by, title, views, duration, thumbnail):
     os.remove("temp.png")
     os.remove("background.png")
 
+# =========================== Commons ===========================
+
+async def f_join_group_call(chat_id, file):
+    await pytgcalls.join_group_call(
+        chat_id,
+        AudioPiped(
+            file,
+        ),
+        stream_type=StreamType().local_stream,
+    )
+
+# =========================== Commons: Keyboards ===========================
+
+def f_generate_keyboard(url):
+    dlurl = url.replace("youtube", "youtubepp")
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("📖 Playlist", callback_data="playlist"),
+                InlineKeyboardButton("Menu ⏯ ", callback_data="menu"),
+            ],
+            [
+                InlineKeyboardButton(text="🎬 YouTube", url=f"{url}"),
+                InlineKeyboardButton(text="Download 📥", url=f"{dlurl}"),
+            ],
+            [InlineKeyboardButton(text="❌ Close", callback_data="cls")],
+        ]
+    )
+
+
+def r_ply():
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("⏹", "leave"),
+                InlineKeyboardButton("⏸", "pause"),
+                InlineKeyboardButton("▶️", "resume"),
+                InlineKeyboardButton("⏭", "skip"),
+            ],
+            [
+                InlineKeyboardButton("Playlist 📖", "playlist"),
+            ],
+            [InlineKeyboardButton("❌ Close", "cls")],
+        ]
+    )
+
+# =========================== End Commons ===========================
 
 @Client.on_message(filters.command("playlist") & filters.group )
 async def playlist(client, message):
@@ -147,28 +194,6 @@ async def updated_stats(chat, queue, vol=100):
     return stats
 
 
-def r_ply(type_):
-    if type_ == "play":
-        pass
-    else:
-        pass
-    mar = InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton("⏹", "leave"),
-                InlineKeyboardButton("⏸", "puse"),
-                InlineKeyboardButton("▶️", "resume"),
-                InlineKeyboardButton("⏭", "skip"),
-            ],
-            [
-                InlineKeyboardButton("Playlist 📖", "playlist"),
-            ],
-            [InlineKeyboardButton("❌ Close", "cls")],
-        ]
-    )
-    return mar
-
-
 @Client.on_message(filters.command("current") & filters.group )
 async def ee(client, message):
     if message.chat.id in DISABLED_GROUPS:
@@ -195,9 +220,9 @@ async def settings(client, message):
     stats = updated_stats(message.chat, queue)
     if stats:
         if playing:
-            await message.reply(stats, reply_markup=r_ply("pause"))
+            await message.reply(stats, reply_markup=r_ply())
         else:
-            await message.reply(stats, reply_markup=r_ply("play"))
+            await message.reply(stats, reply_markup=r_ply())
     else:
         await message.reply("No VC instances running in this chat")
 
@@ -281,7 +306,7 @@ async def p_cb(b, cb):
     filters.regex(pattern=r"^(play|pause|skip|leave|puse|resume|menu|cls)$")
 )
 @cb_admin_check
-async def m_cb(chat, b, cb):
+async def m_cb(chat, cb):
     global que
     if (
         cb.message.chat.title.startswith("Channel Music: ")
@@ -306,7 +331,7 @@ async def m_cb(chat, b, cb):
 
             await cb.answer("Music Paused!")
             await cb.message.edit(
-                updated_stats(m_chat, qeue), reply_markup=r_ply("play")
+                updated_stats(m_chat, qeue), reply_markup=r_ply()
             )
 
     elif type_ == "resume":
@@ -318,7 +343,7 @@ async def m_cb(chat, b, cb):
             await pytgcalls.resume_stream(chat_id)
             await cb.answer("Music Resumed!")
             await cb.message.edit(
-                updated_stats(m_chat, qeue), reply_markup=r_ply("pause")
+                updated_stats(m_chat, qeue), reply_markup=r_ply()
             )
 
     elif type_ == "playlist":
@@ -406,7 +431,7 @@ async def m_cb(chat, b, cb):
                     ),
                 )
                 await cb.answer("Skipped")
-                await cb.message.edit((m_chat, qeue), reply_markup=r_ply(the_data))
+                await cb.message.edit((m_chat, qeue), reply_markup=r_ply())
                 await cb.message.reply_text(
                     f"- Skipped track\n- Now Playing **{qeue[0][0]}**"
                 )
@@ -585,24 +610,11 @@ async def play(_, message: Message):
                 return
         except:
             pass
-        dlurl = url
-        dlurl = dlurl.replace("youtube", "youtubepp")
-        keyboard = InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton("📖 Playlist", callback_data="playlist"),
-                    InlineKeyboardButton("Menu ⏯ ", callback_data="menu"),
-                ],
-                [
-                    InlineKeyboardButton(text="🎬 YouTube", url=f"{url}"),
-                    InlineKeyboardButton(text="Download 📥", url=f"{dlurl}"),
-                ],
-                [InlineKeyboardButton(text="❌ Close", callback_data="cls")],
-            ]
-        )
+
+        keyboard = f_generate_keyboard(url)
         requested_by = message.from_user.first_name
         await generate_cover(requested_by, title, views, duration, thumbnail)
-        file = await get_audio(link)
+        file = await get_audio(url)
     else:
         query = ""
         for i in message.command[1:]:
@@ -696,21 +708,8 @@ async def play(_, message: Message):
                     return
             except:
                 pass
-            dlurl = url
-            dlurl = dlurl.replace("youtube", "youtubepp")
-            keyboard = InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton("📖 Playlist", callback_data="playlist"),
-                        InlineKeyboardButton("Menu ⏯ ", callback_data="menu"),
-                    ],
-                    [
-                        InlineKeyboardButton(text="🎬 YouTube", url=f"{url}"),
-                        InlineKeyboardButton(text="Download 📥", url=f"{dlurl}"),
-                    ],
-                    [InlineKeyboardButton(text="❌ Close", callback_data="cls")],
-                ]
-            )
+
+            keyboard = f_generate_keyboard(url)
             requested_by = message.from_user.first_name
             await generate_cover(requested_by, title, views, duration, thumbnail)
             file = await get_audio(url)
@@ -743,13 +742,7 @@ async def play(_, message: Message):
         appendable = [s_name, r_by, loc]
         qeue.append(appendable)
         try:
-            await pytgcalls.join_group_call(
-                chat_id,
-                AudioPiped(
-                    file,
-                ),
-                stream_type=StreamType().local_stream,
-            )
+            await f_join_group_call(chat_id, file)
         except:
             message.reply("Group Call is not connected or I can't join it")
             return
@@ -865,21 +858,7 @@ async def ytplay(_, message: Message):
             return
     except:
         pass
-    dlurl = url
-    dlurl = dlurl.replace("youtube", "youtubepp")
-    keyboard = InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton("📖 Playlist", callback_data="playlist"),
-                InlineKeyboardButton("Menu ⏯ ", callback_data="menu"),
-            ],
-            [
-                InlineKeyboardButton(text="🎬 YouTube", url=f"{url}"),
-                InlineKeyboardButton(text="Download 📥", url=f"{dlurl}"),
-            ],
-            [InlineKeyboardButton(text="❌ Close", callback_data="cls")],
-        ]
-    )
+
     requested_by = message.from_user.first_name
     await generate_cover(requested_by, title, views, duration, thumbnail)
     file = await get_audio(url)
@@ -898,7 +877,7 @@ async def ytplay(_, message: Message):
         await message.reply_photo(
             photo="final.png",
             caption=f"#⃣ Your requested song <b>queued</b> at position {position}!",
-            reply_markup=keyboard,
+            reply_markup=f_generate_keyboard(url),
         )
         os.remove("final.png")
         return await lel.delete()
@@ -912,19 +891,13 @@ async def ytplay(_, message: Message):
         appendable = [s_name, r_by, loc]
         qeue.append(appendable)
         try:
-            await pytgcalls.join_group_call(
-                chat_id,
-                AudioPiped(
-                    file,
-                ),
-                stream_type=StreamType().local_stream,
-            )
+            await f_join_group_call(chat_id, file)
         except:
             message.reply("Group Call is not connected or I can't join it")
             return
         await message.reply_photo(
             photo="final.png",
-            reply_markup=keyboard,
+            reply_markup=f_generate_keyboard(url),
             caption="▶️ <b>Playing</b> here the song requested by {} via Youtube Music 😎".format(
                 message.from_user.mention()
             ),
@@ -936,6 +909,14 @@ async def ytplay(_, message: Message):
 @Client.on_callback_query(filters.regex(pattern=r"plll"))
 async def lol_cb(b, cb):
     global que
+
+    async def f_send_photo(chat_id, url, caption):
+        await b.send_photo(
+            chat_id,
+            photo="final.png",
+            reply_markup=f_generate_keyboard(url),
+            caption=caption,
+        )
 
     cbd = cb.data.strip()
     chat_id = cb.message.chat.id
@@ -986,21 +967,7 @@ async def lol_cb(b, cb):
     except Exception as e:
         print(e)
         return
-    dlurl = url
-    dlurl = dlurl.replace("youtube", "youtubepp")
-    keyboard = InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton("📖 Playlist", callback_data="playlist"),
-                InlineKeyboardButton("Menu ⏯ ", callback_data="menu"),
-            ],
-            [
-                InlineKeyboardButton(text="🎬 YouTube", url=f"{url}"),
-                InlineKeyboardButton(text="Download 📥", url=f"{dlurl}"),
-            ],
-            [InlineKeyboardButton(text="❌ Close", callback_data="cls")],
-        ]
-    )
+
     requested_by = useer_name
     await generate_cover(requested_by, title, views, duration, thumbnail)
     file = await get_audio(url)
@@ -1019,12 +986,7 @@ async def lol_cb(b, cb):
         appendable = [s_name, r_by, loc]
         qeue.append(appendable)
         await cb.message.delete()
-        await b.send_photo(
-            chat_id,
-            photo="final.png",
-            caption=f"#⃣  Song requested by {r_by.mention()} <b>queued</b> at position {position}!",
-            reply_markup=keyboard,
-        )
+        await f_send_photo(chat_id, url, f"#⃣  Song requested by {r_by.mention()} <b>queued</b> at position {position}!")
         os.remove("final.png")
 
     else:
@@ -1039,18 +1001,8 @@ async def lol_cb(b, cb):
         appendable = [s_name, r_by, loc]
         qeue.append(appendable)
 
-        await pytgcalls.join_group_call(
-            chat_id,
-            AudioPiped(
-                file,
-            ),
-            stream_type=StreamType().local_stream,
-        )
+        await f_join_group_call(chat_id, file)
         await cb.message.delete()
-        await b.send_photo(
-            chat_id,
-            photo="final.png",
-            reply_markup=keyboard,
-            caption=f"▶️ <b>Playing</b> here the song requested by {r_by.mention()} via Youtube Music 😎",
-        )
+        await f_send_photo(chat_id, url, f"▶️ <b>Playing</b> here the song requested by {r_by.mention()} via Youtube Music 😎")
+
         os.remove("final.png")
