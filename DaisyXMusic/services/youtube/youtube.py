@@ -1,14 +1,13 @@
 import asyncio
 
 
-async def get_audio(link: str) -> str:
-    link = f"https://youtube.com{results[0]['url_suffix']}"
+async def get_audio(url: str) -> str:
     proc = await asyncio.create_subprocess_exec(
         "yt-dlp",
         "-g",
         "-f",
         "bestaudio",
-        f"{link}",
+        f"{url}",
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
