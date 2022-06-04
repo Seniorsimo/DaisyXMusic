@@ -1,5 +1,6 @@
 from typing import List
 
+from pyrogram import enums
 from pyrogram.types import Chat
 
 from DaisyXMusic.function.admins import get as gett
@@ -12,7 +13,7 @@ async def get_administrators(chat: Chat) -> List[int]:
     if get:
         return get
     else:
-        administrators = chat.get_members(filter="administrators")
+        administrators = chat.get_members(filter=enums.ChatMembersFilter.ADMINISTRATORS)
         to_set = []
 
         async for administrator in administrators:
