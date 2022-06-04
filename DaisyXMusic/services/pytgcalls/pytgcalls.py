@@ -1,4 +1,4 @@
-import DaisyXMusic.config
+from DaisyXMusic import config
 from pyrogram import Client
 from pytgcalls import PyTgCalls
 from pytgcalls.types import Update
