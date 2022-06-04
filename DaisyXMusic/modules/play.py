@@ -714,6 +714,7 @@ async def play(_, message: Message):
             requested_by = message.from_user.first_name
             await generate_cover(requested_by, title, views, duration, thumbnail)
             file = await get_audio(url)
+            file = file[1]
     chat_id = get_chat_id(message.chat)
     for x in pytgcalls.active_calls:
         ACTV_CALLS.append(int(x.chat_id))
@@ -882,6 +883,7 @@ async def ytplay(_, message: Message):
     requested_by = message.from_user.first_name
     await generate_cover(requested_by, title, views, duration, thumbnail)
     file = await get_audio(url)
+    file = file[1]
     chat_id = get_chat_id(message.chat)
     for x in pytgcalls.active_calls:
         ACTV_CALLS.append(int(x.chat_id))
