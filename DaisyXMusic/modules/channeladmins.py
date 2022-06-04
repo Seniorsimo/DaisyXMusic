@@ -13,7 +13,7 @@ ACTV_CALLS = []
 
 
 @Client.on_message(
-    filters.command(["channelpause", "cpause"]) & filters.group & ~filters.edited
+    filters.command(["channelpause", "cpause"]) & filters.group 
 )
 @errors
 @authorized_users_only
@@ -36,7 +36,7 @@ async def pause(_, message: Message):
 
 
 @Client.on_message(
-    filters.command(["channelresume", "cresume"]) & filters.group & ~filters.edited
+    filters.command(["channelresume", "cresume"]) & filters.group
 )
 @errors
 @authorized_users_only
@@ -59,7 +59,7 @@ async def resume(_, message: Message):
 
 
 @Client.on_message(
-    filters.command(["channelend", "cend"]) & filters.group & ~filters.edited
+    filters.command(["channelend", "cend"]) & filters.group 
 )
 @errors
 @authorized_users_only
@@ -87,7 +87,7 @@ async def stop(_, message: Message):
 
 
 @Client.on_message(
-    filters.command(["channelskip", "cskip"]) & filters.group & ~filters.edited
+    filters.command(["channelskip", "cskip"]) & filters.group 
 )
 @errors
 @authorized_users_only
@@ -127,7 +127,7 @@ async def skip(_, message: Message):
 
 
 @Client.on_message(
-    filters.command(["channelmute", "cmute"]) & filters.group & ~filters.edited
+    filters.command(["channelmute", "cmute"]) & filters.group 
 )
 @errors
 @authorized_users_only
@@ -154,7 +154,7 @@ async def mute(_, message: Message):
 
 
 @Client.on_message(
-    filters.command(["channelunmute", "cunmute"]) & filters.group & ~filters.edited
+    filters.command(["channelunmute", "cunmute"]) & filters.group 
 )
 @errors
 @authorized_users_only

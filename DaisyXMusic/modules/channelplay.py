@@ -24,7 +24,7 @@ ACTV_CALLS = []
 
 
 @Client.on_message(
-    filters.command(["channelplaylist", "cplaylist"]) & filters.group & ~filters.edited
+    filters.command(["channelplaylist", "cplaylist"]) & filters.group 
 )
 async def playlist(client, message):
     try:
@@ -98,7 +98,7 @@ def r_ply(type_):
 
 
 @Client.on_message(
-    filters.command(["channelcurrent", "ccurrent"]) & filters.group & ~filters.edited
+    filters.command(["channelcurrent", "ccurrent"]) & filters.group 
 )
 async def ee(client, message):
     try:
@@ -117,7 +117,7 @@ async def ee(client, message):
 
 
 @Client.on_message(
-    filters.command(["channelplayer", "cplayer"]) & filters.group & ~filters.edited
+    filters.command(["channelplayer", "cplayer"]) & filters.group 
 )
 @authorized_users_only
 async def settings(client, message):
@@ -335,7 +335,7 @@ async def m_cb(chat, b, cb):
 
 
 @Client.on_message(
-    filters.command(["channelplay", "cplay"]) & filters.group & ~filters.edited
+    filters.command(["channelplay", "cplay"]) & filters.group 
 )
 @authorized_users_only
 async def play(_, message: Message):
