@@ -17,7 +17,7 @@ async def get_administrators(chat: Chat) -> List[int]:
         to_set = []
 
         async for administrator in administrators:
-            if administrator.can_manage_voice_chats:
+            if administrator.privileges.can_manage_video_chats:
                 to_set.append(administrator.user.id)
 
         set(chat.id, to_set)
