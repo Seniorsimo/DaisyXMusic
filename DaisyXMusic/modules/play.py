@@ -100,20 +100,9 @@ async def generate_cover(requested_by, title, views, duration, thumbnail):
     os.remove("temp.png")
     os.remove("background.png")
 
-# =========================== Commons ===========================
-
-async def f_join_group_call(chat_id, file):
-    await pytgcalls.join_group_call(
-        chat_id,
-        AudioPiped(
-            file,
-        ),
-        stream_type=StreamType().local_stream,
-    )
-
 # =========================== Commons: Keyboards ===========================
 
-def f_generate_keyboard(url):
+def kb_standard(url):
     dlurl = url.replace("youtube", "youtubepp")
     return InlineKeyboardMarkup(
         [
@@ -130,7 +119,19 @@ def f_generate_keyboard(url):
     )
 
 
-def r_ply():
+def kb_reduced():
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("📖 Playlist", callback_data="playlist"),
+                InlineKeyboardButton("Menu ⏯ ", callback_data="menu"),
+            ],
+            [InlineKeyboardButton(text="❌ Close", callback_data="cls")],
+        ]
+    )
+
+
+def kb_command():
     return InlineKeyboardMarkup(
         [
             [
@@ -144,6 +145,44 @@ def r_ply():
             ],
             [InlineKeyboardButton("❌ Close", "cls")],
         ]
+    )
+
+
+def kb_selector(query, user_id):
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "1️⃣", callback_data=f"plll 0|{query}|{user_id}"
+                ),
+                InlineKeyboardButton(
+                    "2️⃣", callback_data=f"plll 1|{query}|{user_id}"
+                ),
+                InlineKeyboardButton(
+                    "3️⃣", callback_data=f"plll 2|{query}|{user_id}"
+                ),
+            ],
+            [
+                InlineKeyboardButton(
+                    "4️⃣", callback_data=f"plll 3|{query}|{user_id}"
+                ),
+                InlineKeyboardButton(
+                    "5️⃣", callback_data=f"plll 4|{query}|{user_id}"
+                ),
+            ],
+            [InlineKeyboardButton(text="❌ Close", callback_data="cls")],
+        ]
+    )
+
+# =========================== Commons: pytgcalls ===========================
+
+async def f_join_group_call(chat_id, file):
+    await pytgcalls.join_group_call(
+        chat_id,
+        AudioPiped(
+            file,
+        ),
+        stream_type=StreamType().local_stream,
     )
 
 # =========================== End Commons ===========================
@@ -212,17 +251,11 @@ async def settings(client, message):
     if message.chat.id in DISABLED_GROUPS:
         await message.reply("Music Player is Disabled")
         return
-    playing = None
     chat_id = get_chat_id(message.chat)
-    if chat_id in pytgcalls.active_chats:
-        playing = True
     queue = que.get(chat_id)
     stats = updated_stats(message.chat, queue)
     if stats:
-        if playing:
-            await message.reply(stats, reply_markup=r_ply())
-        else:
-            await message.reply(stats, reply_markup=r_ply())
+        await message.reply(stats, reply_markup=kb_command())
     else:
         await message.reply("No VC instances running in this chat")
 
@@ -312,10 +345,10 @@ async def m_cb(chat, cb):
         cb.message.chat.title.startswith("Channel Music: ")
         and chat.title[14:].isnumeric()
     ):
-        chet_id = int(chat.title[13:])
+        chat_id = int(chat.title[13:])
     else:
-        chet_id = cb.message.chat.id
-    qeue = que.get(chet_id)
+        chat_id = cb.message.chat.id
+    qeue = que.get(chat_id)
     type_ = cb.matches[0].group(1)
     cb.message.chat.id
     m_chat = cb.message.chat
@@ -331,7 +364,7 @@ async def m_cb(chat, cb):
 
             await cb.answer("Music Paused!")
             await cb.message.edit(
-                updated_stats(m_chat, qeue), reply_markup=r_ply()
+                updated_stats(m_chat, qeue), reply_markup=kb_command()
             )
 
     elif type_ == "resume":
@@ -343,7 +376,7 @@ async def m_cb(chat, cb):
             await pytgcalls.resume_stream(chat_id)
             await cb.answer("Music Resumed!")
             await cb.message.edit(
-                updated_stats(m_chat, qeue), reply_markup=r_ply()
+                updated_stats(m_chat, qeue), reply_markup=kb_command()
             )
 
     elif type_ == "playlist":
@@ -394,21 +427,7 @@ async def m_cb(chat, cb):
     elif type_ == "menu":
         stats = updated_stats(cb.message.chat, qeue)
         await cb.answer("Menu opened")
-        marr = InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton("⏹", "leave"),
-                    InlineKeyboardButton("⏸", "puse"),
-                    InlineKeyboardButton("▶️", "resume"),
-                    InlineKeyboardButton("⏭", "skip"),
-                ],
-                [
-                    InlineKeyboardButton("Playlist 📖", "playlist"),
-                ],
-                [InlineKeyboardButton("❌ Close", "cls")],
-            ]
-        )
-        await cb.message.edit(stats, reply_markup=marr)
+        await cb.message.edit(stats, reply_markup=kb_command())
 
     elif type_ == "skip":
         if qeue:
@@ -431,7 +450,7 @@ async def m_cb(chat, cb):
                     ),
                 )
                 await cb.answer("Skipped")
-                await cb.message.edit((m_chat, qeue), reply_markup=r_ply())
+                await cb.message.edit((m_chat, qeue), reply_markup=kb_command())
                 await cb.message.reply_text(
                     f"- Skipped track\n- Now Playing **{qeue[0][0]}**"
                 )
@@ -529,7 +548,7 @@ async def play(_, message: Message):
             if message.reply_to_message.entities:
                 entities = message.reply_to_message.entities + entities
             elif message.reply_to_message.caption_entities:
-                entities = message.reply_to_message.entities + entities
+                entities = message.reply_to_message.caption_entities + entities
         else:
             message.text or message.caption
 
@@ -553,15 +572,7 @@ async def play(_, message: Message):
                 f"❌ Videos longer than {DURATION_LIMIT} minute(s) aren't allowed to play!"
             )
             return
-        keyboard = InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton("📖 Playlist", callback_data="playlist"),
-                    InlineKeyboardButton("Menu ⏯ ", callback_data="menu"),
-                ],
-                [InlineKeyboardButton(text="❌ Close", callback_data="cls")],
-            ]
-        )
+        keyboard = kb_reduced()
         file_name = get_file_name(audio)
         title = file_name
         thumb_name = "https://telegra.ph/file/f6086f8909fbfeb0844f2.png"
@@ -611,7 +622,7 @@ async def play(_, message: Message):
         except:
             pass
 
-        keyboard = f_generate_keyboard(url)
+        keyboard = kb_standard(url)
         requested_by = message.from_user.first_name
         await generate_cover(requested_by, title, views, duration, thumbnail)
         file = await get_audio(url)
@@ -647,31 +658,8 @@ async def play(_, message: Message):
                 toxxt += f" ╚ <b>Channel</b> - {results[j]['channel']}\n\n"
 
                 j += 1
-            koyboard = InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            "1️⃣", callback_data=f"plll 0|{query}|{user_id}"
-                        ),
-                        InlineKeyboardButton(
-                            "2️⃣", callback_data=f"plll 1|{query}|{user_id}"
-                        ),
-                        InlineKeyboardButton(
-                            "3️⃣", callback_data=f"plll 2|{query}|{user_id}"
-                        ),
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            "4️⃣", callback_data=f"plll 3|{query}|{user_id}"
-                        ),
-                        InlineKeyboardButton(
-                            "5️⃣", callback_data=f"plll 4|{query}|{user_id}"
-                        ),
-                    ],
-                    [InlineKeyboardButton(text="❌ Close", callback_data="cls")],
-                ]
-            )
-            await lel.edit(toxxt, reply_markup=koyboard, disable_web_page_preview=True)
+
+            await lel.edit(toxxt, reply_markup=kb_selector(query, user_id), disable_web_page_preview=True)
             # WHY PEOPLE ALWAYS LOVE PORN ?? (A point to think)
             return
             # Returning to pornhub
@@ -709,7 +697,7 @@ async def play(_, message: Message):
             except:
                 pass
 
-            keyboard = f_generate_keyboard(url)
+            keyboard = kb_standard(url)
             requested_by = message.from_user.first_name
             await generate_cover(requested_by, title, views, duration, thumbnail)
             file = await get_audio(url)
@@ -877,7 +865,7 @@ async def ytplay(_, message: Message):
         await message.reply_photo(
             photo="final.png",
             caption=f"#⃣ Your requested song <b>queued</b> at position {position}!",
-            reply_markup=f_generate_keyboard(url),
+            reply_markup=kb_standard(url),
         )
         os.remove("final.png")
         return await lel.delete()
@@ -897,7 +885,7 @@ async def ytplay(_, message: Message):
             return
         await message.reply_photo(
             photo="final.png",
-            reply_markup=f_generate_keyboard(url),
+            reply_markup=kb_standard(url),
             caption="▶️ <b>Playing</b> here the song requested by {} via Youtube Music 😎".format(
                 message.from_user.mention()
             ),
@@ -914,7 +902,7 @@ async def lol_cb(b, cb):
         await b.send_photo(
             chat_id,
             photo="final.png",
-            reply_markup=f_generate_keyboard(url),
+            reply_markup=kb_standard(url),
             caption=caption,
         )
 
