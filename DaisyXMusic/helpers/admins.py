@@ -12,12 +12,14 @@ async def get_administrators(chat: Chat) -> List[int]:
     if get:
         return get
     else:
-        administrators = chat.get_members(filter="administrators")
+        generator = chat.get_members(filter="administrators")
         to_set = []
 
-        for administrator in administrators:
-            if administrator.can_manage_voice_chats:
-                to_set.append(administrator.user.id)
+        if generator is not None:
+            administrators = await generator
+            for administrator in administrators:
+                if administrator.can_manage_voice_chats:
+                    to_set.append(administrator.user.id)
 
         set(chat.id, to_set)
         return await get_administrators(chat)
